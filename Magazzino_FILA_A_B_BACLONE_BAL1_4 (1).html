@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Magazzino Ricambi</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+:root{
+  --bg:#edf1f7;
+  --card:#ffffff;
+  --line:#e5e9ef;
+  --text:#253140;
+  --muted:#8993a1;
+  --blue:#2f80ed;
+  --blue-dark:#1768cf;
+  --blue-soft:#eef6ff;
+  --red:#ef4f5f;
+  --shadow:0 10px 28px rgba(40,55,78,.08);
+  --shadow-hover:0 14px 34px rgba(40,55,78,.12)
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:linear-gradient(180deg,#eef2f8 0%,#f5f7fa 100%);
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  font-size:14px;
+}
+button,input,select{font:inherit}
+header{
+  background:transparent;color:var(--text);padding:20px 22px 12px;
+}
+header h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.35px}
+header p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.toolbar{
+  position:sticky;top:0;z-index:30;
+  margin:0 18px 16px;padding:10px;
+  background:rgba(255,255,255,.86);backdrop-filter:blur(14px);
+  border:1px solid rgba(229,233,239,.95);border-radius:15px;
+  box-shadow:0 6px 20px rgba(40,55,78,.05);
+  display:flex;gap:8px;align-items:center;
+}
+.icon-btn{
+  width:38px;height:38px;border:1px solid var(--line);border-radius:10px;
+  background:#fff;color:#5a6675;font-size:18px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:.15s ease;
+}
+.icon-btn:hover{background:#f8fafc;transform:translateY(-1px);box-shadow:0 4px 10px rgba(40,55,78,.08)}
+.search-wrap{position:relative;flex:1;max-width:760px}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#9aa4b1;pointer-events:none}
+#search{
+  width:100%;height:40px;padding:0 42px;border:1px solid var(--line);
+  border-radius:11px;background:#fff;color:var(--text);font-size:13px;outline:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+}
+#search::placeholder{color:#a2abb6}
+#search:focus{border-color:#bcd6f7;box-shadow:0 0 0 4px rgba(47,128,237,.08)}
+.search-clear{position:absolute;right:6px;top:4px;width:32px;height:32px;border:0;background:transparent;color:#8b95a2;border-radius:8px;font-size:19px;cursor:pointer}
+#app{padding:0 18px 22px}
+.rows{display:flex;flex-direction:column;gap:16px}
+.row{
+  background:rgba(255,255,255,.66);border:1px solid var(--line);border-radius:16px;padding:10px;
+  box-shadow:var(--shadow);
+}
+.rowhead{display:flex;align-items:center;gap:10px;padding:5px 4px 11px}
+.rowtitle{font-weight:800;font-size:16px;letter-spacing:-.2px}
+.rowmeta{font-size:12px;color:var(--muted)}
+.rowtools{display:none}
+.shelfline{
+  display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding:0 2px 8px;
+  -webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior-x:contain;
+  scrollbar-width:thin;cursor:grab;
+}
+.shelfline.dragging{cursor:grabbing;user-select:none}
+.shelf{
+  flex:0 0 510px;background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden;
+  box-shadow:0 4px 14px rgba(40,55,78,.06);transition:.16s ease;
+}
+.shelf:hover{box-shadow:var(--shadow-hover)}
+.shelfhead{
+  display:flex;align-items:center;gap:8px;
+  background:#fff;color:var(--text);padding:11px 12px;border-bottom:1px solid #edf0f4;
+}
+.shelfhead b{font-size:15px;font-weight:700}.shelfhead small{color:var(--muted);font-size:12px}
+.shelfactions{margin-left:auto;display:flex;gap:4px}
+.shelfactions .icon-btn{
+  width:30px;height:30px;border:1px solid #edf0f4;background:#fff;color:#728091;
+  font-size:16px;box-shadow:none;
+}
+.shelfactions .icon-btn:first-child{background:var(--blue-soft);color:var(--blue);border-color:#dcecff}
+.tablewrap{overflow:auto;max-height:360px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  position:sticky;top:0;background:#fafbfd;text-align:left;padding:8px 9px;
+  border-bottom:1px solid #edf0f4;color:#8b95a2;font-size:11px;font-weight:700;letter-spacing:.3px;
+  z-index:1;
+}
+td{padding:9px;border-bottom:1px solid #f0f2f5;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.code{font-weight:800;color:#415062}
+.actions{white-space:nowrap}
+.small{
+  width:29px;height:29px;border:0;border-radius:8px;cursor:pointer;font-size:15px;margin-right:4px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.edit{background:#f2f7ff;color:var(--blue)}.del{background:#fff1f2;color:var(--red)}
+.empty{padding:18px;text-align:center;color:#a0a9b3}
+.bottom-create{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;
+  display:flex;gap:8px;align-items:center;box-shadow:var(--shadow)
+}
+.btn{border:0;border-radius:9px;padding:9px 13px;font-weight:800;cursor:pointer}
+.primary{background:var(--blue);color:#fff;box-shadow:0 5px 14px rgba(47,128,237,.18)}
+.primary:hover{background:var(--blue-dark)}
+.secondary{background:#f3f5f7;color:#596574;border:1px solid #e7ebef}
+
+/* modern white search popup inspired by the supplied UI */
+#searchPop{
+  display:none;position:fixed;inset:0;z-index:100;
+  /* niente sfocatura sul campo ricerca: il testo digitato resta nitido */
+  background:rgba(84,101,122,.10);backdrop-filter:none;
+  align-items:flex-start;justify-content:center;padding:78px 12px 20px;
+}
+.search-modal{
+  width:min(610px,94vw);background:#fff;border:1px solid rgba(229,233,239,.95);
+  border-radius:16px;box-shadow:0 22px 55px rgba(48,61,82,.18);overflow:hidden;
+  animation:pop .16s ease-out;
+}
+@keyframes pop{from{opacity:0;transform:translateY(-7px) scale(.985)}to{opacity:1;transform:none}}
+.search-modal-head{
+  padding:12px 14px;border-bottom:1px solid #edf0f4;display:flex;align-items:center;gap:8px;
+}
+.search-modal-head .glass{color:var(--blue);font-size:18px}
+.search-modal-head strong{font-size:13px}.search-modal-head span{font-size:10px;color:var(--muted)}
+.search-modal-close{
+  margin-left:auto;width:30px;height:30px;border:0;background:#f4f6f8;color:#7a8592;
+  border-radius:8px;font-size:18px;cursor:pointer;
+}
+.search-table-wrap{max-height:300px;overflow:auto}
+.search-table{width:100%;border-collapse:collapse;font-size:14px}
+.search-table th{position:sticky;top:0;background:#fafbfd;padding:8px 10px}
+.search-table td{padding:10px;border-bottom:1px solid #edf0f4}
+.search-table tr:hover td{background:#fbfcfe}
+.result-code{font-weight:900;color:#3d4b5b;white-space:nowrap}
+.result-pos{font-weight:800;color:var(--blue);white-space:nowrap}
+.copy-result{border:1px solid #d8e6f8;background:#eef6ff;color:#1768cf;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
+.copy-result:hover{background:#deedff}
+.view-mode .admin-only{display:none!important}
+.view-mode .shelfactions, .view-mode td.actions{display:none!important}
+.admin-mode .admin-only{display:inline-flex}
+.no-results{padding:22px;text-align:center;color:#88929f;font-size:12px}
+.search-foot{padding:8px 12px;border-top:1px solid #edf0f4;color:#9aa3ae;font-size:10px}
+
+/* modal cards match the reference style */
+#modalBack{display:none;position:fixed;inset:0;background:rgba(84,101,122,.18);backdrop-filter:blur(3px);z-index:110;align-items:center;justify-content:center;padding:16px}
+#modalBack .search-modal{width:min(520px,95vw)}
+#modalBack input,#modalBack select{
+  width:100%;padding:10px 11px;margin-top:5px;border:1px solid #dfe5eb;border-radius:9px;
+  background:#fbfcfd;outline:none;
+}
+#modalBack input:focus,#modalBack select:focus{border-color:#bcd6f7;box-shadow:0 0 0 4px rgba(47,128,237,.07)}
+#modalBack label{color:#7e8996!important}
+
+/* subtle phone-friendly feel */
+@media(max-width:700px){
+  header{padding:16px 13px 10px}
+  .toolbar{margin:0 8px 12px;padding:8px}
+  #app{padding:0 8px 18px}
+  .shelf{flex-basis:88vw}
+  .row{border-radius:14px}
+  #searchPop{padding-top:64px}
+  .search-modal{width:95vw}
+}
+
+#deletePop{display:none;position:fixed;inset:0;z-index:120;background:rgba(84,101,122,.20);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px}
+.delete-card{width:min(390px,94vw);background:#fff;border-radius:16px;box-shadow:0 22px 55px rgba(48,61,82,.20);border:1px solid #e5e9ef;overflow:hidden;animation:popDelete .16s ease-out}
+@keyframes popDelete{from{opacity:0;transform:translateY(-5px) scale(.985)}to{opacity:1;transform:none}}
+.delete-top{padding:20px 20px 8px;text-align:center}.delete-icon{width:46px;height:46px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff1f2;color:#ef4f5f;font-size:22px}
+.delete-top h3{margin:0;font-size:16px;color:#283544;letter-spacing:-.15px}.delete-top p{margin:7px 0 0;color:#8993a1;font-size:12px;line-height:1.45}
+
+.delete-detail{
+  margin:14px 16px 16px;
+  padding:14px 15px;
+  background:#f8fafc;
+  border:1px solid #e8edf2;
+  border-radius:12px;
+  font-size:12px;
+  color:#7a8795;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+.delete-field{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  padding-bottom:8px;
+  border-bottom:1px solid #e9eef2;
+}
+.delete-field:last-child{border-bottom:0;padding-bottom:0}
+.delete-label{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.55px;
+  color:#9aa4af;
+  text-transform:uppercase;
+}
+.delete-value{
+  color:#354252;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.35;
+  word-break:break-word;
+}
+.delete-value.pos{color:#2f80ed}
+.delete-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #edf0f4}
+.delete-btn{border:0;border-radius:9px;padding:9px 13px;font-weight:800;cursor:pointer}.delete-cancel{background:#f2f4f6;color:#596574}.delete-confirm{background:#ef4f5f;color:#fff}
+
+
+html,body,button,input,select,textarea,table{
+  font-family:'Roboto','Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif !important;
+}
+body{letter-spacing:0;line-height:1.45;-webkit-font-smoothing:antialiased}
+header h1{font-weight:800;letter-spacing:-.01em}
+header p,.rowmeta,.shelfhead small,.search-modal-head span,.search-foot{font-weight:400}
+th,.delete-label{font-weight:700}
+/* niente zoom automatico su iPhone quando si tocca un campo */
+@media(max-width:700px){#search,#modalBack input,#modalBack select,.shelf-delete-form input{font-size:16px}}
+
+
+.shelfactions .danger-table{color:#ef4f5f;background:#fff5f5;border-color:#fde1e3}
+.shelfactions .danger-table:hover{background:#ffecee}
+#shelfDeletePop{display:none;position:fixed;inset:0;z-index:140;background:rgba(84,101,122,.20);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px}
+.shelf-delete-card{width:min(410px,94vw);background:#fff;border:1px solid #e5e9ef;border-radius:16px;box-shadow:0 22px 55px rgba(48,61,82,.20);overflow:hidden}
+.shelf-delete-top{padding:20px 20px 10px;text-align:center}
+.shelf-delete-icon{width:46px;height:46px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff1f2;color:#ef4f5f;font-size:21px}
+.shelf-delete-top h3{margin:0;font-size:16px;color:#283544}
+.shelf-delete-top p{margin:7px 0 0;color:#8993a1;font-size:12px;line-height:1.45}
+.shelf-delete-name{margin:13px 16px;padding:10px 12px;background:#f8fafc;border:1px solid #e8edf2;border-radius:10px;text-align:center;font-size:12px;font-weight:800;color:#354252}
+.shelf-delete-form{padding:0 16px 15px}
+.shelf-delete-form label{display:block;font-size:10px;font-weight:800;color:#8b95a2;text-transform:uppercase;letter-spacing:.4px}
+.shelf-delete-form input{width:100%;margin-top:5px;padding:10px 11px;border:1px solid #dfe5eb;border-radius:9px;background:#fbfcfd;outline:none;text-transform:uppercase}
+.shelf-delete-form input:focus{border-color:#bcd6f7;box-shadow:0 0 0 4px rgba(47,128,237,.07)}
+.shelf-delete-error{min-height:16px;margin-top:6px;color:#ef4f5f;font-size:11px}
+.shelf-delete-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #edf0f4}
+
+
+.rowtools{display:flex;margin-left:auto}
+.rowtools .icon-btn{width:32px;height:32px}
+
+
+/* Ottimizzazione telefono/tablet */
+@media(max-width:700px){
+  body{font-size:14px}
+  header{padding:15px 12px 10px}
+  header h1{font-size:20px}
+  .toolbar{
+    position:sticky;top:0;margin:0 7px 10px;padding:8px;
+    gap:7px;flex-wrap:wrap;border-radius:13px;
+  }
+  .toolbar>.icon-btn{flex:0 0 38px}
+  .search-wrap{order:10;flex:1 1 100%;max-width:none}
+  #search{height:42px;font-size:13px}
+  #app{padding:0 7px 18px}
+  .row{padding:8px;border-radius:14px}
+  .rowhead{padding:5px 3px 9px}
+  .rowtitle{font-size:16px}
+  .shelfline{
+    gap:10px;padding-bottom:10px;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;
+    touch-action:pan-x pan-y;
+  }
+  .shelf{
+    flex:0 0 calc(100vw - 34px);
+    min-width:0;
+    scroll-snap-align:start;
+  }
+  .tablewrap{max-height:48vh;overflow:auto;-webkit-overflow-scrolling:touch}
+  .shelfhead{padding:9px}
+  .shelfactions .icon-btn{width:32px;height:32px}
+  .small{width:31px;height:31px}
+  #searchPop{padding:62px 8px 12px}
+  .search-modal{width:95vw;max-height:86vh;border-radius:16px}
+  .search-table-wrap{max-height:55vh}
+}
+@media(min-width:701px) and (max-width:1100px){
+  .shelf{flex-basis:460px}
+}
+
+
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+.toolbar{top:env(safe-area-inset-top,0px) !important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:#eef2f8}
+
+.sync{display:inline-block;margin-top:9px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:500;background:#fff;border:1px solid var(--line);color:#6b7785;cursor:pointer;user-select:none}
+.sync.ok{color:#1f8f55;border-color:#cfeedd;background:#f1fbf5}
+.sync.error{color:#c0392b;border-color:#fcd5d9;background:#fff1f2}
+</style>
+</head>
+<body>
+<noscript><div style="margin:16px;padding:16px;border-radius:12px;background:#fff3cd;color:#664d03;font:15px/1.5 sans-serif"><b>Questa è solo un'anteprima.</b> L'anteprima di WhatsApp/iPhone non esegue il sito. Apri il file o il link con <b>Safari</b> o <b>Chrome</b>.</div></noscript>
+<header>
+  <h1>Magazzino ricambi</h1>
+  <p>Organizzato per file e scaffali</p>
+  <div id="syncStatus" class="sync" onclick="syncNow(true)"></div>
+</header>
+
+<div class="toolbar">
+  <button class="icon-btn admin-only" title="Nuova fila" aria-label="Nuova fila" onclick="openFila()">＋</button>
+  <button class="icon-btn admin-only" title="Nuovo scaffale" aria-label="Nuovo scaffale" onclick="openShelf()">▦</button>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input id="search" autocomplete="off" placeholder="Cerca ricambio per codice o descrizione..." oninput="searchParts()">
+    <button id="clearSearch" class="search-clear" onclick="clearSearch()">×</button>
+  </div>
+  <button class="icon-btn admin-only" title="Esporta CSV" onclick="exportCSV()">⇩</button>
+  <label class="icon-btn admin-only" title="Importa CSV">⇧<input type="file" hidden accept=".csv" onchange="importCSV(event)"></label>
+  <button class="icon-btn" id="adminToggle" title="Area riservata" aria-label="Area riservata" onclick="toggleAdmin()">🔒</button>
+</div>
+
+<div style="padding:0 18px 10px;color:#929ca8;font-size:10px">Trascina le righe degli scaffali con il dito per scorrere a destra e sinistra.</div>
+<main id="app"></main>
+
+<div id="searchPop" onclick="closeSearch(event)">
+  <div class="search-modal">
+    <div class="search-modal-head">
+      <span class="glass">⌕</span><strong id="searchTitle">Risultati ricerca</strong><span id="searchCount"></span>
+      <button class="search-modal-close" onclick="hideSearch()">×</button>
+    </div>
+    <div id="searchResults"></div>
+    <div class="search-foot">Usa COPIA per copiare codice e posizione. Seleziona una riga per vedere lo scaffale.</div>
+  </div>
+</div>
+
+<div id="modalBack" class="search-pop" onclick="closeModalBackdrop(event)">
+  <div class="search-modal" style="width:min(520px,94vw)" onclick="event.stopPropagation()">
+    <div class="search-modal-head"><strong id="modalTitle">Inserisci</strong><button class="search-modal-close" onclick="closeModal()">×</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* alert/prompt/confirm del browser spesso sono bloccati o scomodi su telefono: uso popup propri */
+window.alert=function(m){document.getElementById('alertMsg').textContent=String(m);document.getElementById('alertPop').style.display='flex'};
+function closeAlert(){document.getElementById('alertPop').style.display='none'}
+const KEY='magazzino_ui_filaA_B_BAL1_4_v3';
+const SEED=[["SCAFFALE D", "TUBAZIONE FRENO", "5801374272", "", "D1.0L"], ["SCAFFALE D", "TUBAZIONE FRENO", "41217768", "", "D1.0L"], ["SCAFFALE D", "TUBAZIONE FRENO", "5801481345", "", "D1.0L"], ["SCAFFALE D", "TUBAZIONE FRENO", "41233164", "", "D1.0L"], ["SCAFFALE D", "Guarnizione coperchio testa", "5801512813", "", "D1.1L"], ["SCAFFALE D", "Guarnizione coperchio testa", "500309014", "", "D1.1L"], ["SCAFFALE D", "Guarnizione coperchio testa", "994466902", "", "D1.2L"], ["SCAFFALE D", "Guarnizione coperchio testa", "504070037", "", "D1.2L"], ["SCAFFALE D", "Guarnizione coperchio testa", "504070038", "", "D1.2L"], ["SCAFFALE D", "Guarnizione sfiato motore", "5801874962", "", "D1.2L"], ["SCAFFALE D", "Guarnizione coppa olio", "5802111356", "", "D1.3L"], ["SCAFFALE D", "Guarnizione coperchio testa", "500383881", "Daily", "D1.3L"], ["SCAFFALE D", "Guarnizione coperchio testa", "98427866", "", "D1.3L"], ["SCAFFALE D", "Guarnizione coperchio testa", "504386827", "", "D1.3L"], ["SCAFFALE D", "Guarnizione sfiato motore", "504387088", "", "D1.4L"], ["SCAFFALE D", "Guarnizione coperchio testa", "98449318", "", "D1.4L"], ["SCAFFALE D", "Guarnizione coperchio testa", "5801404925", "", "D1.4L"], ["SCAFFALE D", "Guarnizione coperchio testa", "5801678853", "", "D1.4L"], ["SCAFFALE D", "Guarnizione coperchio testa", "504070040", "", "D1.4L"], ["SCAFFALE D", "Supporto ABS", "03.189.12.02.0", "", "D1.1.1"], ["SCAFFALE D", "Supporto sensore ABS DX-SX", "03.189.07.87.0", "", "D1.1.1"], ["SCAFFALE D", "Supporto sensore ABS DX-SX EP", "03.189.14.61.0", "", "D1.1.1"], ["SCAFFALE D", "Supporto sensore ABS SX", "03.189.07.59.0", "", "D1.1.1"], ["SCAFFALE D", "Supporto sensore ABS DX-SX", "03.189.07.58.0", "", "D1.1.1"], ["SCAFFALE D", "Supporto sensore ABS DX-SX BE", "03.189.14.86.0", "", "D1.1.2"], ["LACCI DI COMANDO", "Comando flessibile", "42567945", "Frigo in cabina", "1.1"], ["LACCI DI COMANDO", "Comando flessibile", "5802848483", "Frigo in cabina", "1.1"], ["LACCI DI COMANDO", "Comando flessibile", "42577927", "Frigo in cabina", "1.1"], ["LACCI DI COMANDO", "Comando flessibile", "5800251059", "Frigo in cabina", "1.1"], ["LACCI DI COMANDO", "Comando flessibile", "504008821", "Cassetto cabina", "1.1"], ["LACCI DI COMANDO", "Comando flessibile", "504312853", "Cassetto cabina", "1.1"], ["LACCI DI COMANDO", "TUBO FLESSIBILE", "5802391629", "", "1.1"], ["LACCI DI COMANDO", "TUBO FLESSIBILE", "5802379620", "", "1.1"], ["LACCI DI COMANDO", "Comando flessibile", "5801899747", "Apertura cofano", "1.2"], ["LACCI DI COMANDO", "Comando flessibile", "5801899747", "Apertura cofano", "1.2"], ["LACCI DI COMANDO", "Maniglia d'apertura", "504008811", "Cassetto cabina", "1.2"], ["LACCI DI COMANDO", "Maniglia d'apertura", "98441320", "Sportello ant", "1.2"], ["LACCI DI COMANDO", "Comando flessibile", "98474986", "Acceleratore", "1.2"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "504141089", "", "2.1"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "504141092", "", "2.1"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "5801421634", "", "2.1"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "504378974", "", "2.1"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "500354895", "", "2.1"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "5802206916", "", "2.2"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "5802206941", "", "2.2"], ["TUBAZ. COMPRESSORE", "Tubazione compressore", "500358453", "", "2.2"], ["TERRA", "Pinza freno Sx", "PRK001", "", ""], ["TERRA", "Pinza freno Sx", "PRK002", "", ""], ["TERRA", "Pinza freno Dx", "PRK003", "", ""], ["TERRA", "Pinza freno", "PRK004", "", ""], ["TERRA", "Pinza freno Sx", "PRK005", "", ""], ["TERRA", "Pinza freno Dx", "PRK006", "", ""], ["TERRA", "Pinza freno post Sx", "IVE001", "", ""]];
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+let _idn=0;
+function id(){return (window.crypto&&crypto.randomUUID)?crypto.randomUUID():'p'+Date.now().toString(36)+(_idn++).toString(36)+Math.random().toString(36).slice(2,8)}
+function uniqIds(a){const seen=new Set();a.forEach(r=>{if(seen.has(r.id))r.id=id();seen.add(r.id)});return a}
+function normalize(r){return {id:r.id||id(),fila:(r.fila||'FILA A').trim().toUpperCase(),scaffale:(r.scaffale||r.zona||'SCAFFALE 1').trim().toUpperCase(),descr:r.descr||r.descrizione||'',codice:r.codice||'',nota:r.nota||'',pos:r.pos||r.posizione||''}}
+/* Modalità collegata: il sito è servito da Google Apps Script e legge/scrive sul foglio Google. */
+const CONNECTED=!!(window.google&&google.script&&google.script.run);
+const SKEY='magazzino_sync_v1';
+/* archivio del browser "a prova di errore" (in alcuni browser/iframe può essere bloccato) */
+const store={
+  mem:{},
+  get(k){try{return localStorage.getItem(k)}catch(e){return this.mem[k]!==undefined?this.mem[k]:null}},
+  set(k,v){try{localStorage.setItem(k,v);return true}catch(e){this.mem[k]=v;return false}}
+};
+let base=new Map(); /* ultimo stato noto del foglio: id -> JSON della riga */
+function demoData(){
+  /* Prima importazione guidata: solo FILA A / SCAFFALE 1A fornito dall'utente. */
+  const data=[];
+  const articoli=[
+    ["Man. Sup. Rad.","500304694","","A111"],
+    ["Man. Sup. Rad.","504294844","","A111"],
+    ["Man. Sup. Rad.","500356248","","A111"],
+    ["Man. Sup. Rad.","504062581","","A111"],
+    ["Man. Sup. Rad.","5802703924","","A111"],
+    ["Man. Sup. Rad.","5802703939","","A111"],
+    ["Man. Sup. Rad.","99487932","","A111"],
+    ["Man. Sup. Rad.","4771614","","A111"],
+    ["Man. Sup. Rad.","99487932","","A111"],
+    ["Man. Sup. Rad.","5801302588","","A111"],
+    ["Man. Sup. Rad.","504215702","","A111"],
+    ["Man. Sup. Rad.","5042944844","","A111"],
+    ["Man. Sup. Rad.","504215702","","A111"],
+    ["Man. Infer. Rad.","5802097630","",""],
+    ["Man. Infer. Rad.","500304693","","A112"],
+    ["Man. Infer. Rad.","5802703929","","A112"],
+    ["Man. Infer. Rad.","99488778","","A112"],
+    ["Man. Infer. Rad.","4805368","","A112"],
+    ["Man. Infer. Rad.","504086541","","A112"],
+    ["Man. Infer. Rad.","5801302589","","A112"],
+    ["Man. Infer. Rad.","5801303586","","A112"],
+    ["Man. Infer. Rad.","5801303586","","A112"],
+    ["Man. Infer. Rad.","504018469","","A112"],
+    ["Man. Infer. Rad.","5802097630","","A112"],
+    ["Man. Infer. Rad.","5802097630","","A112"],
+    ["Man. Infer. Rad.","99487933","","A112"],
+    ["Man. Acqua","504000022","","A131"],
+    ["Man. Acqua","41210945","","A132"],
+    ["Man. Acqua","41299450","","A133"],
+    ["Man. Acqua","41210450","","A133"],
+    ["Man. Acqua","5801625918","","A134"],
+    ["Man. Acqua","41042165","","A135"],
+    ["Man. Acqua","5801677925","","A136"],
+    ["Man. Acqua","5802703924","","A137"],
+    ["Man. Acqua","5802011227","NP","A137"],
+    ["Collare. Fissag.","504180831","","A175"],
+    ["Collare. Fissag.","5802912360","","A175"]
+  ];
+  articoli.forEach(r=>data.push(normalize({fila:'FILA A',scaffale:'SCAFFALE 1A',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  /* FILA B: dati forniti dall'utente, mantenendo sigle, codici e posizioni */
+  const filaB1=[
+    ['FA','2996156','','B102'],['FA','2996154','','B103'],['FA','2995964','','B131'],
+    ['FA','500086267','','B132'],['FA','500086309','','B133']
+  ];
+  const filaB2=[
+    ['FA','2996126','','B201'],['FA','2996127','','B202'],['FA','500055021','','B203'],['FA','1903669','','B203'],
+    ['FG','2997376','','B211'],['FG','500086381','','B212'],['FG','504048025','','B213'],['FG','5802082703','','B213'],
+    ['FG','1901605','','B214'],['FG','2992300','','B215'],['FG','1902138','','B216'],['FG','1901929','','B221'],
+    ['FG','2991585','','B222'],['FG','1908547','','B223'],['FO','2995811','','B224'],['FG','1907640','','B225'],
+    ['FG','2992241','','B231'],['FG','2992242','','B232'],['FG','2994057','','B233'],['FG','1901689','','B234'],
+    ['FO','2995655','','B241'],['FO','1907566','','B242'],['FO','2992188','','B243'],['FG','84605017','','B244']
+  ];
+  filaB1.forEach(r=>data.push(normalize({fila:'FILA B',scaffale:'SCAFFALE 1B',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  filaB2.forEach(r=>data.push(normalize({fila:'FILA B',scaffale:'SCAFFALE 2B',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  /* FILA B: scaffali 3B, 4B e 5B, dati trascritti come forniti */
+  const filaB3=[
+    ['FA','500055621','','B301'],['FA','5801400571','','B302'],['FA','42553256','','B303'],
+    ['FC','500086547','','B311'],['FG','5801439820','','B312'],['FA','2992447','','B313'],
+    ['FA','500086330','','B314'],['FO','5803419305','','B322'],['FG','5802925674','','B323'],
+    ['FG','500086009','','B324'],['FG','2992662','','B325'],['FO','2992544','','B331'],
+    ['FG','2995711','','B332'],['FG','2994048','','B333'],['FO','5801592275','','B341'],
+    ['FE','500086279','OLIO-ACQUA','B342'],['FE','5803208328','','B343']
+  ];
+  const filaB4=[
+    ['FA','1907553','','B401'],['FA','1902077','','B402'],['FA','1904581','','B402'],
+    ['FA','42558096','','B403'],['FA','42558097','','B404'],['FS','5803140405','','B411'],
+    ['FG','5803505957','','B412'],['FG','5803283552','','B413'],['FO','5803141473','','B414'],
+    ['Contenitore filtro olio','5801860017','','B415'],['FA','5041534841','','B421'],
+    ['FG','5801516883','','B422'],['FG','500086544','','B424'],['FS','5801856860','','B431'],
+    ['FO','5802108699','','B432'],['FO','5801415504','','B433'],
+    ['Perni fissaggiofiltro sfiato','5801472560','','B441'],['Galleggiante Ad-Blu','5802754497','','B442'],
+    ['Galleggiante Ad-Blu','5802406363','','B442'],['Galleggiante Ad-Blu','5803329273','','B442'],
+    ['Galleggiante gasolio','69503676 / 504148878 ghiera / O-ring','','B451'],
+    ['Galleggiante gasolio','504075432','','B452'],['Galleggiante gasolio','504045238','','B452'],
+    ['Galleggiante gasolio','41042851','','B452'],['Galleggiante gasolio','69503676','','B452']
+  ];
+  const filaB5=[
+    ['Ammortizatore ant cabina','500086991','','B501'],['Bloccaggio cabina','504088023','','B502'],
+    ['Ammortizatore post cabina','2997844','','B503'],['Pastiglite freno','2996518 / 500055655','','B511'],
+    ['Kit molle pastiglie','42561635','','B512'],['Pastiglite freno + indicatori','500055372','','B513'],
+    ['Pastiglite freno','500041168','','B520'],['Pastiglite freno','42555633 + 42567352 / 500055652','','B521'],
+    ['Pastiglite freno','503612294 / 42567354','','B522'],['Pastiglite freno','150222006','','B523'],
+    ['Pastiglite freno','5949768175 / 42567354','post daily','B530'],
+    ['Pastiglite freno','500055562','','B531'],['Pastiglite freno','42555917','','B532'],
+    ['Pastiglite freno','503612302 / 5949768171','ant daily','B533'],
+    ['Ammortizatore','503612231','','B540'],['Ammortizatore','41214698','','B541'],
+    ['Ammortizatore','504152176','','B542'],['Ammortizatore','503612241','','B543'],
+    ['Ammortizatore','5802108928','','B544'],['Ammortizatore','503612233','','B545'],
+    ['Ammortizzatore','503612256','','B545'],['Ammortizatore','504148143','','B546']
+  ];
+  filaB3.forEach(r=>data.push(normalize({fila:'FILA B',scaffale:'SCAFFALE 3B',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  filaB4.forEach(r=>data.push(normalize({fila:'FILA B',scaffale:'SCAFFALE 4B',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  filaB5.forEach(r=>data.push(normalize({fila:'FILA B',scaffale:'SCAFFALE 5B',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  /* FILA BACLONE: dati trascritti dal file dell'utente, senza eliminare i dati già presenti */
+  const bal1=[
+    ['Comando flessibile','42567945','Frigo in cabina','1.1'],
+    ['Comando flessibile','5802848483','Frigo in cabina','1.1'],
+    ['Comando flessibile','42577927','Frigo in cabina','1.1'],
+    ['Comando flessibile','5802521059','Frigo in cabina','1.1'],
+    ['Comando flessibile','504008821','Casetto cabina','1.1'],
+    ['Comando flessibile','504312853','Casetto cabina','1.1'],
+    ['Comando flessibile','5802848483','','1.1'],
+    ['TUBO FLESSIBILE','5802391629','','1.1'],
+    ['TUBO FLESSIBILE','5802379620','','1.1'],
+    ['TUBO FLESSIBILE','42568129','','1.1'],
+    ['Comando flessibile','5801899747','Apertura cofano','1.2'],
+    ['Comando flessibile','5801899744','Apertura cofano','1.2'],
+    ["Maniglia d'apertura",'504008811','Casetto cabina','1.2'],
+    ["Maniglia d'apertura",'98441320','Sportello ant','1.2'],
+    ['Comando flessibile','98474986','Accelatore','1.2']
+  ];
+  const bal2=[
+    ['Tubazione compressore','504141089','','2.1'],['Tubazione compressore','504141092','','2.1'],
+    ['Tubazione compressore','5801421643','','2.1'],['Tubazione compressore','504378974','','2.1'],
+    ['Tubazione compressore','500354895','','2.1'],['Tubazione compressore','5802206916','','2.2'],
+    ['Tubazione compressore','5802206941','','2.2'],['Tubazione compressore','500358453','','2.2'],
+    ['Tubazione compressore','504358456','','2.2'],['Tubazione compressore','5801827940','','2.2'],
+    ['Tubazione compressore','5801749093','','2.2'],['Tubazione compressore','5801837912','','2.2']
+  ];
+  const bal3=[
+    ['Tubazione combustibile','504048157','','3.1'],['Tubazione combustibile','504048156','','3.1'],
+    ['Tubazione combustibile','504056124','','3.1'],['Tubazione combustibile','99473921','','3.1'],
+    ['Tubazione combustibile','504003798','','3.1'],['Tubazione combustibile','504093045','','3.1'],
+    ['Tubazione combustibile','504024564','','3.1'],['Tubazione combustibile','504056114','','3.1'],
+    ['Tubazione combustibile','500343663','','3.1'],['Tubazione combustibile','5801551718','','3.1'],
+    ['Tubazione combustibile','5801510653','','3.1'],['Tubazione combustibile','500352450','','3.1'],
+    ['Tubazione combustibile','5801510649','','3.1'],['Tubazione combustibile','5801668291','','3.1'],
+    ['Tubazione combustibile','504148019','','3.1'],['Tubazione combustibile','504116145','','3.2'],
+    ['Tubazione combustibile','504113538','','3.2'],['Tubazione combustibile','5801551723','','3.2'],
+    ['Tubazione combustibile','504113535','','3.2'],['Tubazione combustibile','504323112','','3.2'],
+    ['Tubazione combustibile','504356999','','3.2'],['Tubazione combustibile','504101854','','3.2'],
+    ['Tubazione combustibile','504072854','','3.3'],['Tubazione combustibile','5801280548','','3.3'],
+    ['Tubazione combustibile','504044604','','3.3'],['Tubazione combustibile','5801544772','','3.3'],
+    ['Tubazione combustibile','5801544895','','3.3'],['Tubazione combustibile','5801545197','','3.3'],
+    ['Tubazione combustibile','5801637997','','3.3'],['Tubazione combustibile','504007621','','3.3'],
+    ['Tubazione combustibile','5801774033','','3.4'],['Tubazione combustibile','504116115','','3.4'],
+    ['Tubazione combustibile','5801592613','','3.4'],['Tubazione combustibile','5801510635','','3.4'],
+    ['Tubazione combustibile','5801592619','','3.4'],['Tubazione combustibile','4896612','','3.4'],
+    ['Tubazione combustibile','504147809','','3.4'],['Tubazione combustibile','98435435','','3.4'],
+    ['Tubazione combustibile','98435435','','3.4'],['Tubazione combustibile','5801787826','','3.4'],
+    ['Tubazione combustibile','504113538','','3.4'],['Tubazione combustibile','5801645770','','3.4']
+  ];
+  const bal4=[
+    ['Tubazione raffreddamento','500354892','','4.1'],['Tubazione raffreddamento','5801577148','','4.1'],
+    ['Tubazione raffreddamento','5801421643','','4.1'],['Tubazione raffreddamento','5801577143','','4.1'],
+    ['Tubazione raffreddamento','504136788','','4.1'],['Tubazione raffreddamento','504331494','','4.1'],
+    ['Tubazione raffreddamento','5801554532','','4.1'],['Tubazione raffreddamento','41029847','','4.1'],
+    ['Tubazione raffreddamento','41227005','','4.1'],['Tubazione raffreddamento','5801741205','','4.1'],
+    ['Tubazione raffreddamento','5801617727','','4.1'],['Tubazione raffreddamento','504298022','','4.1'],
+    ['Tubazione raffreddamento','504336783','','4.1'],['Tubazione raffreddamento','99484821','','4.1'],
+    ['Tubazione raffreddamento','504021972','','4.1'],['Tubazione raffreddamento','41221944','','4.1'],
+    ['Tubazione raffreddamento','500354892','','4.2'],['Tubazione raffreddamento','504307592','','4.2'],
+    ['Tubazione raffreddamento','504225293','','4.2'],['Tubazione raffreddamento','5801827940','','4.2'],
+    ['Tubazione raffreddamento','504141092','','4.2'],['Tubazione raffreddamento','4896468','','4.2'],
+    ['Tubazione raffreddamento','5803216922','','4.2'],['Tubazione raffreddamento','504338268','','4.2'],
+    ['Tubazione raffreddamento','504385761','','4.2'],['Tubazione raffreddamento','504385762','','4.2'],
+    ['Tubazione raffreddamento','99487933','','4.2'],['Tubazione raffreddamento','5801414276','','4.2'],
+    ['Tubazione raffreddamento','504331494','','4.2'],['Tubazione raffreddamento','500341819','','4.2'],
+    ['Tubazione raffreddamento','5801454884','','4.2'],['Tubazione raffreddamento','5801329084','','4.2'],
+    ['Tubazione raffreddamento','5801617726','','4.3'],['Tubazione raffreddamento','41222398','','4.3'],
+    ['Tubazione raffreddamento','504313598','','4.3'],['Tubazione raffreddamento','41241013','','4.3'],
+    ['Tubazione raffreddamento','5801847081','','4.3'],['Tubazione raffreddamento','41241014','','4.3'],
+    ['Tubazione raffreddamento','5801372661','','4.3'],['Tubazione raffreddamento','99482735','','4.3'],
+    ['Tubazione raffreddamento','99475808','','4.3'],['Tubazione raffreddamento','5801670387','','4.3'],
+    ['Tubazione raffreddamento','98418981','','4.3'],['Tubazione raffreddamento','5801319253','','4.3'],
+    ['Tubazione raffreddamento','5801551693','','4.3'],['Tubazione raffreddamento','5802206941','','4.3'],
+    ['Tubazione raffreddamento','5801554532','','4.3'],['Tubazione raffreddamento','41022947','','4.3'],
+    ['Tubazione raffreddamento','5801827122','','4.4'],['Tubazione raffreddamento','504087354','','4.4'],
+    ['Tubazione raffreddamento','504050453','','4.4'],['Tubazione raffreddamento','500360787','','4.4'],
+    ['Tubazione raffreddamento','504122928','','4.4'],['Tubazione raffreddamento','5803046665','','4.4'],
+    ['Tubazione raffreddamento','41215700','','4.4'],['Tubazione raffreddamento','41222398','','4.4'],
+    ['Tubazione raffreddamento','41222339','','4.4'],['Tubazione raffreddamento','5801617855','','4.4'],
+    ['Tubazione raffreddamento','5803046665','','4.4'],['Tubazione raffreddamento','5802703939','','4.4'],
+    ['Tubazione raffreddamento','5801741205','','4.4'],['Tubazione raffreddamento','5801617852','','4.5'],
+    ['Tubazione raffreddamento','58016500317','','4.5'],['Tubazione raffreddamento','98433754','','4.5'],
+    ['Tubazione raffreddamento','504192016','','4.5'],['Tubazione raffreddamento','5801551718','','4.5'],
+    ['Tubazione raffreddamento','5801317182','','4.5'],['Tubazione raffreddamento','5802455873','','4.5'],
+    ['Tubazione raffreddamento','41282643','','4.5'],['Tubazione raffreddamento','5801741205','','4.5'],
+    ['Tubazione raffreddamento','5803216927','','4.5'],['Tubazione raffreddamento','5803216926','','4.5'],
+    ['Tubazione raffreddamento','5802455093','','4.5'],['Tubazione raffreddamento','41221555','','4.5'],
+    ['Tubazione raffreddamento','5802729454','','4.5'],['Tubazione raffreddamento','41221582','','4.5'],
+    ['Tubazione raffreddamento','5801554483','','4.5']
+  ];
+  bal1.forEach(r=>data.push(normalize({fila:'FILA BACLONE',scaffale:'SCAFFALE BAL1',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  bal2.forEach(r=>data.push(normalize({fila:'FILA BACLONE',scaffale:'SCAFFALE BAL2',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  bal3.forEach(r=>data.push(normalize({fila:'FILA BACLONE',scaffale:'SCAFFALE BAL3',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  bal4.forEach(r=>data.push(normalize({fila:'FILA BACLONE',scaffale:'SCAFFALE BAL4',descr:r[0],codice:r[1],nota:r[2],pos:r[3]})));
+  return data;
+}
+function initial(){
+  if(CONNECTED){
+    try{
+      const st=JSON.parse(store.get(SKEY)||'null');
+      if(st&&Array.isArray(st.rows)&&Array.isArray(st.base)){base=new Map(st.base);return st.rows.map(normalize)}
+    }catch(e){}
+    base=new Map();
+    return []; /* niente dati finti: si aspetta il foglio */
+  }
+  const saved=store.get(KEY);
+  if(saved){try{return uniqIds(JSON.parse(saved).map(normalize))}catch(e){}}
+  return demoData();
+}
+let rows=initial();
+function persist(){
+  /* righe e stato del foglio vengono salvati insieme, così non possono andare fuori sincrono */
+  if(CONNECTED)return store.set(SKEY,JSON.stringify({rows,base:[...base]}));
+  return store.set(KEY,JSON.stringify(rows));
+}
+let warnedStore=false;
+function save(){
+  const ok=persist();
+  if(!ok&&!CONNECTED&&!warnedStore){warnedStore=true;alert('Attenzione: non riesco a salvare i dati nel browser. Esporta il CSV per non perdere le modifiche.')}
+  if(CONNECTED)requestSync(false);
+  return ok;
+}
+
+/* ---------- Sincronizzazione con Google Sheets ---------- */
+let busy=false,again=false,againPull=false,loaded=false,lastOk=null,syncTimer=null;
+function setStatus(kind,extra){
+  const el=document.getElementById('syncStatus');if(!el)return;
+  const txt={
+    local:'💾 Solo su questo dispositivo',
+    loading:'↻ Aggiornamento…',
+    saving:'↻ Salvataggio…',
+    ok:'✓ Sincronizzato'+(lastOk?' alle '+lastOk:''),
+    error:'⚠ Foglio non raggiungibile: modifiche in attesa (tocca per riprovare)'
+  }[kind];
+  el.textContent=txt;el.className='sync '+kind;el.title=extra||'';
+}
+function gsRun(fn,...args){
+  return new Promise((ok,ko)=>{
+    google.script.run.withSuccessHandler(ok).withFailureHandler(e=>ko(new Error((e&&e.message)||String(e))))[fn](...args);
+  });
+}
+function diff(){
+  const cur=new Map(rows.map(r=>[r.id,JSON.stringify(r)]));
+  const up=rows.filter(r=>base.get(r.id)!==cur.get(r.id));
+  const del=[...base.keys()].filter(i=>!cur.has(i));
+  return {up,del};
+}
+async function flush(){
+  for(let g=0;g<6;g++){
+    const d=diff();
+    if(!d.up.length&&!d.del.length)return;
+    const sent=d.up.map(r=>[r.id,JSON.stringify(r)]); /* cosa ho davvero inviato */
+    await gsRun('syncRows',d.up.map(r=>({...r})),d.del);
+    sent.forEach(([i,j])=>base.set(i,j));
+    d.del.forEach(i=>base.delete(i));
+    persist();
+  }
+}
+async function pull(){
+  const remote=await gsRun('getRows');
+  const rem=(remote||[]).map(normalize);
+  const d=diff();
+  if(d.up.length||d.del.length)return; /* nel frattempo hai modificato qualcosa: lo invio prima, poi rileggo */
+  const same=rem.length===rows.length&&rem.every((r,i)=>JSON.stringify(r)===JSON.stringify(rows[i]));
+  base=new Map(rem.map(r=>[r.id,JSON.stringify(r)]));
+  loaded=true;
+  if(!same){rows=rem;persist();render()}else persist();
+  if(!rows.length)render();
+}
+function nowHM(){return new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}
+async function syncNow(doPull){
+  if(!CONNECTED)return;
+  if(busy){again=true;againPull=againPull||!!doPull;return}
+  busy=true;setStatus(doPull?'loading':'saving');
+  try{
+    await flush();
+    if(doPull||!loaded)await pull();
+    lastOk=nowHM();setStatus('ok');
+  }catch(e){
+    console.error(e);setStatus('error',e.message);
+  }finally{
+    busy=false;
+    if(again){const p=againPull;again=false;againPull=false;syncNow(p)}
+  }
+}
+function requestSync(doPull){clearTimeout(syncTimer);setStatus('saving');syncTimer=setTimeout(()=>syncNow(doPull),700)}
+
+function grouped(){const g={};rows.forEach(r=>{g[r.fila]??={};g[r.fila][r.scaffale]??=[];g[r.fila][r.scaffale].push(r)});return g}
+function match(r){const q=document.getElementById('search').value.trim().toLowerCase();if(!q)return true;return [r.codice,r.descr,r.nota,r.pos,r.fila,r.scaffale].join(' ').toLowerCase().includes(q)}
+
+function isPart(r){return !!(r.descr||r.codice||r.nota||r.pos)}
+function render(){
+  /* ricorda le posizioni di scorrimento prima di ridisegnare */
+  const pageY=window.scrollY, lefts={}, tops={};
+  document.querySelectorAll('.row').forEach(row=>{
+    const f=row.querySelector('.rowtitle')?.textContent;
+    const sl=row.querySelector('.shelfline'); if(f&&sl)lefts[f]=sl.scrollLeft;
+    row.querySelectorAll('.shelf').forEach(sh=>{
+      const k=f+'|'+sh.querySelector('.shelfhead b')?.textContent;
+      const tw=sh.querySelector('.tablewrap'); if(tw)tops[k]=tw.scrollTop;
+    });
+  });
+  const g=grouped(), files=Object.keys(g).sort();
+  document.getElementById('app').innerHTML='<div class="rows">'+files.map(f=>{
+    const shelves=Object.keys(g[f]).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    return `<section class="row"><div class="rowhead"><div class="rowtitle">${esc(f)}</div><div class="rowmeta">${shelves.length} scaffali</div><div class="rowtools"><button class="icon-btn" title="Modifica nome fila" aria-label="Modifica nome fila" onclick='renameFila(${JSON.stringify(f)})'>✎</button></div>
+      </div>
+      <div class="shelfline">${shelves.map(s=>shelfHTML(f,s,g[f][s])).join('')}</div></section>`;
+  }).join('')+'</div>';
+  if(!files.length)document.getElementById('app').innerHTML='<div class="empty">'+(CONNECTED&&!loaded?'Caricamento dei dati dal foglio Google…':'Nessun dato: crea la prima fila con ＋ oppure importa un CSV.')+'</div>';
+  setupTouchScroll();
+  document.querySelectorAll('.row').forEach(row=>{
+    const f=row.querySelector('.rowtitle')?.textContent;
+    const sl=row.querySelector('.shelfline'); if(f&&lefts[f]!=null&&sl)sl.scrollLeft=lefts[f];
+    row.querySelectorAll('.shelf').forEach(sh=>{
+      const k=f+'|'+sh.querySelector('.shelfhead b')?.textContent;
+      const tw=sh.querySelector('.tablewrap'); if(tw&&tops[k]!=null)tw.scrollTop=tops[k];
+    });
+  });
+  window.scrollTo(0,pageY);
+}
+function shelfHTML(f,s,all){
+  const a=all.filter(isPart);
+  return `<section class="shelf"><div class="shelfhead"><b>${esc(s)}</b><small>${esc(f)} · ${a.length}</small><div class="shelfactions">
+    <button type="button" class="icon-btn" title="Aggiungi ricambio" aria-label="Aggiungi ricambio" data-fila="${esc(f)}" data-scaffale="${esc(s)}" onclick="openPart(this.dataset.fila,this.dataset.scaffale)">＋</button>
+    <button type="button" class="icon-btn" title="Rinomina tabella" aria-label="Rinomina tabella" data-fila="${esc(f)}" data-scaffale="${esc(s)}" onclick="renameShelf(this.dataset.fila,this.dataset.scaffale)">✎</button>
+    <button type="button" class="icon-btn danger-table" title="Elimina tabella" aria-label="Elimina tabella" data-fila="${esc(f)}" data-scaffale="${esc(s)}" onclick="askDeleteShelf(this.dataset.fila,this.dataset.scaffale)">⌫</button>
+  </div></div>
+  <div class="tablewrap"><table><thead><tr><th>DESCRIZIONE</th><th>CODICE</th><th>NOTA</th><th>POSIZIONE</th><th></th></tr></thead>
+  <tbody>${a.length?a.map(r=>`<tr data-part-id='${esc(r.id)}'><td>${esc(r.descr)}</td><td class="code">${esc(r.codice)}</td><td>${esc(r.nota)}</td><td>${esc(r.pos)}</td>
+  <td class="actions"><button type="button" class="small edit" title="Modifica" aria-label="Modifica" data-id="${esc(r.id)}">✎</button><button type="button" class="small del" title="Elimina" aria-label="Elimina" data-id="${esc(r.id)}">⌫</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Scaffale vuoto</td></tr>'}</tbody></table></div></section>`;
+}
+
+function searchParts(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  document.getElementById('clearSearch').style.display=q?'block':'none';
+  if(!q){hideSearch();return}
+  const found=rows.filter(r=>isPart(r)&&match(r));
+  document.getElementById('searchCount').textContent=found.length+' risultati';
+  document.getElementById('searchResults').innerHTML=found.length?
+    `<div class="search-table-wrap"><table class="search-table"><thead><tr><th>CODICE</th><th>DESCRIZIONE</th><th>POSIZIONE</th><th></th></tr></thead>
+    <tbody>${found.map(r=>`<tr><td class="result-code">${esc(r.codice||'-')}</td><td onclick='jumpTo("${r.id}")'>${esc(r.descr||'-')}</td><td class="result-pos">${esc(r.pos||'-')}</td><td><button class="copy-result" onclick='copyPartInfo("${r.id}",event)'>COPIA</button></td></tr>`).join('')}</tbody></table></div>`:
+    '<div class="no-results">Nessun ricambio trovato.</div>';
+  document.getElementById('searchPop').style.display='flex';
+}
+/* Modalità di consultazione predefinita. Nota: password client-side utile per separare l'uso quotidiano, non è una sicurezza professionale. */
+const ADMIN_PASSWORD='officina2026';
+let adminMode=false;
+function toggleAdmin(){
+  if(adminMode){adminMode=false;applyRole();return;}
+  showModal('Accesso proprietario',`<div style="padding:15px"><p style="margin-top:0;color:#667384;font-size:13px">Inserisci la password per modificare il magazzino.</p><input id="adminPass" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;padding:11px;border:1px solid #dfe5eb;border-radius:9px" onkeydown="if(event.key==='Enter')unlockAdmin()"><div id="adminError" style="color:#d33;font-size:12px;margin-top:6px"></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn secondary" onclick="closeModal()">ANNULLA</button><button class="btn primary" onclick="unlockAdmin()">ACCEDI</button></div></div>`);
+  setTimeout(()=>document.getElementById('adminPass')?.focus(),30);
+}
+function unlockAdmin(){const el=document.getElementById('adminPass');if(!el)return;if(el.value===ADMIN_PASSWORD){adminMode=true;closeModal();applyRole()}else{document.getElementById('adminError').textContent='Password non corretta';el.select()}}
+function applyRole(){document.body.classList.toggle('admin-mode',adminMode);document.body.classList.toggle('view-mode',!adminMode);const b=document.getElementById('adminToggle');if(b){b.textContent=adminMode?'🔓':'🔒';b.title=adminMode?'Esci dalla modalità modifica':'Area riservata';b.setAttribute('aria-label',b.title)}render()}
+async function copyPartInfo(rid,event){if(event){event.stopPropagation();event.preventDefault()}const r=rows.find(x=>x.id===rid);if(!r)return;const text=`COD: ${r.codice||'-'}\tPOSIZIONE: ${r.pos||'-'}`;try{await navigator.clipboard.writeText(text);showToast('Copiato: '+text)}catch(e){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showToast('Copiato: '+text)}catch(err){showModal('Copia codice e posizione',`<div style="padding:15px"><textarea readonly style="width:100%;min-height:70px">${esc(text)}</textarea><p>Seleziona e copia il testo.</p></div>`)}ta.remove()}}
+function showToast(message){let t=document.getElementById('copyToast');if(!t){t=document.createElement('div');t.id='copyToast';t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;background:#253140;color:white;padding:11px 15px;border-radius:10px;box-shadow:0 8px 25px #0002;font-size:12px;max-width:90vw';document.body.appendChild(t)}t.textContent=message;t.style.display='block';clearTimeout(window.copyToastTimer);window.copyToastTimer=setTimeout(()=>t.style.display='none',2400)}
+function clearSearch(){document.getElementById('search').value='';document.getElementById('clearSearch').style.display='none';hideSearch();document.getElementById('search').focus()}
+function hideSearch(){document.getElementById('searchPop').style.display='none'}
+function closeSearch(e){if(e.target.id==='searchPop')hideSearch()}
+function jumpTo(rid){
+  const r=rows.find(x=>x.id===rid);hideSearch();if(!r)return;
+  const si=document.getElementById('search');si.value=r.codice||r.descr||'';
+  document.getElementById('clearSearch').style.display='block';
+  const shelf=[...document.querySelectorAll('.shelf')].find(sh=>
+    sh.querySelector('.shelfhead b')?.textContent.trim()===r.scaffale &&
+    sh.closest('.row')?.querySelector('.rowtitle')?.textContent.trim()===r.fila);
+  if(!shelf)return;
+  shelf.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+  shelf.animate([{boxShadow:'0 0 0 3px rgba(47,128,237,.45)'},{boxShadow:'none'}],{duration:1200});
+  const tr=[...shelf.querySelectorAll('tr[data-part-id]')].find(t=>t.dataset.partId===String(r.id));
+  if(tr){tr.scrollIntoView({block:'nearest'});tr.animate([{background:'#fff3bf'},{background:'transparent'}],{duration:1800})}
+}
+
+function setupTouchScroll(){document.querySelectorAll('.shelfline').forEach(el=>{
+  if(el.dataset.ready)return;el.dataset.ready='1';
+  let down=false,drag=false,x=0,sl=0,pid=null;
+  /* Trascinamento solo con il mouse (su touch scorre il browser).
+     Non parte se si preme su un pulsante e cattura il puntatore solo quando si trascina davvero,
+     altrimenti il click non arriva più ai pulsanti modifica/elimina. */
+  el.addEventListener('pointerdown',e=>{
+    if(e.pointerType!=='mouse'||e.button!==0)return;
+    if(e.target.closest('button,input,select,a,label'))return;
+    down=true;drag=false;x=e.clientX;sl=el.scrollLeft;pid=e.pointerId;
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!down)return;
+    const dx=e.clientX-x;
+    if(!drag){
+      if(Math.abs(dx)<6)return;
+      drag=true;el.classList.add('dragging');
+      try{el.setPointerCapture(pid)}catch(_){}
+    }
+    el.scrollLeft=sl-dx;
+  });
+  const end=()=>{
+    down=false;
+    if(drag){drag=false;el.classList.remove('dragging');try{el.releasePointerCapture(pid)}catch(_){}}
+  };
+  ['pointerup','pointercancel'].forEach(ev=>el.addEventListener(ev,end));
+})}
+
+function showModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalBack').style.display='flex'}
+function closeModal(){document.getElementById('modalBack').style.display='none'}
+function closeModalBackdrop(e){if(e.target.id==='modalBack')closeModal()}
+function openFila(){showModal('Nuova fila',`<div style="padding:15px"><input id="filaN" style="width:100%;padding:11px;border:1px solid #cbd7d0;border-radius:9px" placeholder="es. FILA C"><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn secondary" onclick="closeModal()">ANNULLA</button><button class="btn primary" onclick="createFila()">CREA</button></div></div>`);setTimeout(()=>document.getElementById('filaN').focus(),30)}
+function createFila(){const n=document.getElementById('filaN').value.trim().toUpperCase();if(!n)return;if(rows.some(r=>r.fila===n)){alert('La fila esiste già.');return}rows.push(normalize({fila:n,scaffale:'SCAFFALE 1'}));save();closeModal();render()}
+
+function askName(title,label,value,onSave){
+  window._nameCb=onSave;
+  showModal(title,`<div style="padding:15px"><label style="font-size:11px;font-weight:800">${label}<input id="nameIn" value="${esc(value)}" onkeydown="if(event.key==='Enter')submitName()" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px"></label><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn secondary" onclick="closeModal()">ANNULLA</button><button class="btn primary" onclick="submitName()">SALVA</button></div></div>`);
+  setTimeout(()=>{const i=document.getElementById('nameIn');if(i){i.focus();i.select()}},30);
+}
+function submitName(){
+  const i=document.getElementById('nameIn');if(!i)return;
+  const cb=window._nameCb;
+  if(!cb||cb(i.value)!==false)closeModal();
+}
+function renameFila(oldName){
+  askName('Rinomina fila','NOME FILA',oldName,v=>{
+    const n=v.trim().toUpperCase();
+    if(!n||n===oldName)return true;
+    if(rows.some(r=>r.fila===n)){alert('Esiste già una fila con questo nome.');return false}
+    rows.filter(r=>r.fila===oldName).forEach(r=>r.fila=n);
+    save();render();return true;
+  });
+}
+function openShelf(defaultFila=''){const files=Object.keys(grouped());const f=defaultFila||files[0]||'FILA A';showModal('Nuovo scaffale',`<div style="padding:15px"><label style="font-size:11px;font-weight:800">FILA<select id="sf" style="display:block;width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px">${files.map(x=>`<option ${x===f?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label style="display:block;margin-top:10px;font-size:11px;font-weight:800">SCAFFALE<input id="sn" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px" placeholder="es. SCAFFALE 8"></label><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn secondary" onclick="closeModal()">ANNULLA</button><button class="btn primary" onclick="createShelf()">CREA</button></div></div>`)}
+function createShelf(){const f=document.getElementById('sf').value,s=document.getElementById('sn').value.trim().toUpperCase();if(!s)return;if(rows.some(r=>r.fila===f&&r.scaffale===s)){alert('Scaffale già presente.');return}rows.push(normalize({fila:f,scaffale:s}));save();closeModal();render()}
+function renameShelf(f,s){
+  askName('Rinomina tabella','NOME TABELLA',s,v=>{
+    const n=v.trim().toUpperCase();
+    if(!n||n===s)return true;
+    if(rows.some(r=>r.fila===f&&r.scaffale===n)){alert('Esiste già una tabella con questo nome nella fila.');return false}
+    rows.filter(r=>r.fila===f&&r.scaffale===s).forEach(r=>r.scaffale=n);
+    save();render();return true;
+  });
+}
+function openPart(f,s){showModal('Nuovo ricambio',`<div style="padding:15px"><label style="font-size:11px;font-weight:800">DESCRIZIONE<input id="pd" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px"></label><label style="display:block;margin-top:10px;font-size:11px;font-weight:800">CODICE<input id="pc" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px"></label><label style="display:block;margin-top:10px;font-size:11px;font-weight:800">NOTA<input id="pn" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px"></label><label style="display:block;margin-top:10px;font-size:11px;font-weight:800">POSIZIONE<input id="pp" placeholder="es. D1.1.2" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px"></label><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn secondary" onclick="closeModal()">ANNULLA</button><button class="btn primary" onclick='createPart(${JSON.stringify(f)},${JSON.stringify(s)})'>SALVA</button></div></div>`);setTimeout(()=>document.getElementById('pd').focus(),30)}
+function createPart(f,s){const r=normalize({fila:f,scaffale:s,descr:document.getElementById('pd').value.trim(),codice:document.getElementById('pc').value.trim(),nota:document.getElementById('pn').value.trim(),pos:document.getElementById('pp').value.trim()});if(!r.descr&&!r.codice){alert('Inserisci almeno descrizione o codice.');return}rows.push(r);save();closeModal();render()}
+function editPart(id){
+  const r=rows.find(x=>String(x.id)===String(id));
+  if(!r){alert('Ricambio non trovato.');return;}
+  showModal('Modifica ricambio',`<div style="padding:15px">
+    <label style="font-size:11px;font-weight:800">DESCRIZIONE
+      <input id="ed" value="${esc(r.descr)}" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px">
+    </label>
+    <label style="display:block;margin-top:10px;font-size:11px;font-weight:800">CODICE
+      <input id="ec" value="${esc(r.codice)}" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px">
+    </label>
+    <label style="display:block;margin-top:10px;font-size:11px;font-weight:800">NOTA
+      <input id="en" value="${esc(r.nota)}" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px">
+    </label>
+    <label style="display:block;margin-top:10px;font-size:11px;font-weight:800">POSIZIONE
+      <input id="ep" value="${esc(r.pos)}" style="width:100%;margin-top:5px;padding:10px;border:1px solid #cbd7d0;border-radius:9px">
+    </label>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+      <button class="btn secondary" onclick="closeModal()">ANNULLA</button>
+      <button class="btn primary" onclick='savePart(${JSON.stringify(id)})'>SALVA</button>
+    </div>
+  </div>`);
+  setTimeout(()=>document.getElementById('ed')?.focus(),30);
+}
+
+function savePart(id){
+  const r=rows.find(x=>String(x.id)===String(id));
+  if(!r)return;
+  const descr=(document.getElementById('ed')?.value||'').trim();
+  const codice=(document.getElementById('ec')?.value||'').trim();
+  if(!descr && !codice){
+    alert('Inserisci almeno descrizione o codice.');
+    return;
+  }
+  r.descr=descr;
+  r.codice=codice;
+  r.nota=(document.getElementById('en')?.value||'').trim();
+  r.pos=(document.getElementById('ep')?.value||'').trim();
+  save();
+  closeModal();
+  render();
+}
+
+let pendingDeleteId=null;
+
+function deletePart(id){
+  const r=rows.find(x=>String(x.id)===String(id));
+  if(!r){alert('Ricambio non trovato.');return;}
+  pendingDeleteId=r.id;
+  const detail=document.getElementById('deleteDetail');
+  if(detail){
+    detail.innerHTML=
+      '<div class="delete-field"><div class="delete-label">Codice</div><div class="delete-value">'+esc(r.codice||'-')+'</div></div>'+
+      '<div class="delete-field"><div class="delete-label">Descrizione</div><div class="delete-value">'+esc(r.descr||'-')+'</div></div>'+
+      '<div class="delete-field"><div class="delete-label">Posizione</div><div class="delete-value pos">'+esc(r.pos||'-')+'</div></div>';
+  }
+  document.getElementById('deletePop').style.display='flex';
+}
+
+function closeDeletePopup(){
+  pendingDeleteId=null;
+  document.getElementById('deletePop').style.display='none';
+}
+
+function closeDeleteBackdrop(e){
+  if(e.target.id==='deletePop')closeDeletePopup();
+}
+
+function confirmDelete(){
+  if(pendingDeleteId===null)return;
+  const before=rows.length;
+  const target=rows.find(r=>String(r.id)===String(pendingDeleteId));
+  rows=rows.filter(r=>String(r.id)!==String(pendingDeleteId));
+  if(target && !rows.some(r=>r.fila===target.fila&&r.scaffale===target.scaffale)){
+    rows.push(normalize({fila:target.fila,scaffale:target.scaffale})); /* mantiene lo scaffale vuoto */
+  }
+  if(rows.length===before && !target){
+    alert('La riga non è stata trovata.');
+    closeDeletePopup();
+    return;
+  }
+  try {
+    save();
+  } catch(err) {
+    alert('Non riesco a salvare la cancellazione nel browser. Controlla le impostazioni di archiviazione.');
+    console.error(err);
+    return;
+  }
+  closeDeletePopup();
+  render();
+}
+
+
+let pendingShelfDelete=null;
+function askDeleteShelf(f,s){
+  pendingShelfDelete={fila:f,scaffale:s};
+  document.getElementById('shelfDeleteName').textContent=f+' · '+s;
+  document.getElementById('shelfDeleteWord').value='';
+  document.getElementById('shelfDeleteError').textContent='';
+  document.getElementById('shelfDeletePop').style.display='flex';
+  setTimeout(()=>document.getElementById('shelfDeleteWord').focus(),30);
+}
+function closeShelfDelete(){
+  pendingShelfDelete=null;
+  document.getElementById('shelfDeletePop').style.display='none';
+}
+function closeShelfDeleteBackdrop(e){
+  if(e.target.id==='shelfDeletePop')closeShelfDelete();
+}
+function confirmShelfDelete(){
+  if(!pendingShelfDelete)return;
+  const word=(document.getElementById('shelfDeleteWord').value||'').trim().toUpperCase();
+  if(word!=='ELIMINA'){
+    document.getElementById('shelfDeleteError').textContent='Parola non corretta. Scrivi ELIMINA.';
+    document.getElementById('shelfDeleteWord').focus();
+    return;
+  }
+  const {fila,scaffale}=pendingShelfDelete;
+  rows=rows.filter(r=>!(r.fila===fila&&r.scaffale===scaffale));
+  save();
+  closeShelfDelete();
+  render();
+}
+
+function exportCSV(){const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"';const lines=[['FILA','SCAFFALE','DESCRIZIONE','CODICE','NOTA','POSIZIONE'].map(q).join(';'),...rows.map(r=>[r.fila,r.scaffale,r.descr,r.codice,r.nota,r.pos].map(q).join(';'))];const b=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='magazzino.csv';a.click();URL.revokeObjectURL(a.href)}
+function parseCSV(text){
+  const first=text.split(/\r?\n/)[0]||'';
+  const d=first.split(';').length>=first.split(',').length?';':',';
+  const out=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"')q=true;
+    else if(c===d){row.push(cur);cur=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur='';out.push(row);row=[]}
+    else cur+=c;
+  }
+  if(cur!==''||row.length){row.push(cur);out.push(row)}
+  return out.filter(r=>r.some(x=>x.trim()!==''));
+}
+function doImport(){const imp=window._imp||[];window._imp=null;rows.push(...imp);save();closeModal();render()}
+function importCSV(e){
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const t=parseCSV(String(rd.result).replace(/^\uFEFF/,''));
+      if(t.length<2){alert('Il file CSV è vuoto o non valido.');return}
+      const h=t[0].map(x=>x.trim().toUpperCase());
+      const at=k=>h.indexOf(k);
+      if(at('CODICE')<0&&at('DESCRIZIONE')<0){alert('Intestazioni non riconosciute. Servono le colonne: FILA, SCAFFALE, DESCRIZIONE, CODICE, NOTA, POSIZIONE.');return}
+      const g=(v,k)=>(at(k)>=0?v[at(k)]:'')||'';
+      const imp=t.slice(1).map(v=>normalize({fila:g(v,'FILA')||'FILA A',scaffale:g(v,'SCAFFALE')||'SCAFFALE 1',descr:g(v,'DESCRIZIONE'),codice:g(v,'CODICE'),nota:g(v,'NOTA'),pos:g(v,'POSIZIONE')}));
+      window._imp=imp;
+      showModal('Importa CSV',`<div style="padding:16px;line-height:1.5">Aggiungere <b>${imp.length}</b> righe a quelle già presenti?<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn secondary" onclick="window._imp=null;closeModal()">ANNULLA</button><button class="btn primary" onclick="doImport()">IMPORTA</button></div></div>`);
+    }catch(err){console.error(err);alert('Errore durante l\'importazione del file.')}
+    finally{e.target.value=''}
+  };
+  rd.readAsText(f,'UTF-8');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAlert();hideSearch();closeModal();closeDeletePopup();closeShelfDelete()}});
+
+document.addEventListener('click', function(ev){
+  const btn = ev.target.closest('button[data-action]');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  try {
+    if(action === 'edit-part') editPart(btn.dataset.id);
+    if(action === 'delete-part') deletePart(btn.dataset.id);
+    if(action === 'add-part') openPart(btn.dataset.fila, btn.dataset.scaffale);
+    if(action === 'rename-shelf') renameShelf(btn.dataset.fila, btn.dataset.scaffale);
+    if(action === 'delete-shelf') askDeleteShelf(btn.dataset.fila, btn.dataset.scaffale);
+  } catch(err) {
+    console.error('Errore pulsante magazzino:', err);
+    alert('Si è verificato un errore. Ricarica il sito e riprova.');
+  }
+});
+
+
+/* Gestione diretta dei pulsanti di riga: funziona anche dopo il ridisegno delle tabelle. */
+document.addEventListener('click', function(e) {
+  const editBtn = e.target.closest('button.small.edit');
+  const deleteBtn = e.target.closest('button.small.del');
+  if (editBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = editBtn.getAttribute('data-id');
+    if (typeof window.editPart === 'function') window.editPart(id);
+    else alert('Funzione modifica non disponibile: ricarica il file aggiornato.');
+    return;
+  }
+  if (deleteBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = deleteBtn.getAttribute('data-id');
+    if (typeof window.deletePart === 'function') window.deletePart(id);
+    else alert('Funzione elimina non disponibile: ricarica il file aggiornato.');
+  }
+}, true);
+
+/* Espone esplicitamente le funzioni al browser per i comandi dei pulsanti. */
+window.editPart = editPart;
+window.deletePart = deletePart;
+window.savePart = savePart;
+
+document.body.classList.add('view-mode');
+render();
+if(CONNECTED){
+  setStatus('loading');
+  syncNow(true);
+  setInterval(()=>{if(!document.hidden)syncNow(true)},45000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow(true)});
+  window.addEventListener('online',()=>syncNow(true));
+}else setStatus('local');
+</script>
+
+<div id="alertPop" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(84,101,122,.25);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div class="delete-card">
+    <div id="alertMsg" style="padding:22px 20px 16px;text-align:center;line-height:1.5;font-size:14px;color:#354252"></div>
+    <div class="delete-actions"><button class="delete-btn delete-confirm" style="background:#2f80ed" onclick="closeAlert()">OK</button></div>
+  </div>
+</div>
+
+<div id="deletePop" onclick="closeDeleteBackdrop(event)">
+  <div class="delete-card">
+    <div class="delete-top">
+      <div class="delete-icon">⌫</div>
+      <h3>Eliminare questa riga?</h3>
+      <p>Sei sicuro di voler eliminare questo ricambio?</p>
+    </div>
+    <div id="deleteDetail" class="delete-detail"></div>
+    <div class="delete-actions">
+      <button class="delete-btn delete-cancel" onclick="closeDeletePopup()">Annulla</button>
+      <button class="delete-btn delete-confirm" onclick="confirmDelete()">Sì, elimina</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="shelfDeletePop" onclick="closeShelfDeleteBackdrop(event)">
+  <div class="shelf-delete-card">
+    <div class="shelf-delete-top">
+      <div class="shelf-delete-icon">⌫</div>
+      <h3>Eliminare questa tabella?</h3>
+      <p>Per sicurezza, devi scrivere la parola <b>ELIMINA</b>.</p>
+    </div>
+    <div id="shelfDeleteName" class="shelf-delete-name"></div>
+    <div class="shelf-delete-form">
+      <label>Conferma eliminazione
+        <input id="shelfDeleteWord" autocomplete="off" placeholder="SCRIVI ELIMINA">
+      </label>
+      <div id="shelfDeleteError" class="shelf-delete-error"></div>
+    </div>
+    <div class="shelf-delete-actions">
+      <button class="delete-btn delete-cancel" onclick="closeShelfDelete()">Annulla</button>
+      <button class="delete-btn delete-confirm" onclick="confirmShelfDelete()">Elimina tabella</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
